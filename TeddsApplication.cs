@@ -84,7 +84,6 @@ namespace TeddsTimberDesign
         /// </summary> 
         public static List<Dictionary<string, object>> DesignMembers(List<MemberData> memberData)
         {
-            // TODO: let users know in front-end that spans over 6m are usually governed by vibration, not bending or shear.
             var possibleSectionSizes = new List<SectionSize>() {
                 new SectionSize {Width=120, Depth=280},
                 new SectionSize {Width=160, Depth=360},
@@ -155,7 +154,7 @@ namespace TeddsTimberDesign
                     { "util", util },
                     { "material", material },
                     { "strength", strengthClass },
-                    { "outputRtf", outputRtf }
+                    // { "outputRtf", outputRtf }
                 });
             }
 
