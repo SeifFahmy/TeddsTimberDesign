@@ -8,11 +8,11 @@ namespace TeddsTimberDesign
 {
     class Program
     {
-        static string Main(string[] args)
+        static void Main(string[] args)
         {
             if (args.Length != 2)
             {
-                return "invalid number of arguments passed";
+                Console.WriteLine("invalid number of arguments passed"); ;
             }
 
             string parentWindow = args[0];
@@ -24,7 +24,8 @@ namespace TeddsTimberDesign
             var parsedJson = JsonConvert.DeserializeObject<List<MemberData>>(jsonData);
 
             var results = TeddsApplication.DesignMembers(parsedJson);
-            return JsonConvert.SerializeObject(results);
+            var jsonResults = JsonConvert.SerializeObject(results);
+            System.Console.WriteLine(jsonResults);
         }
 
     }
