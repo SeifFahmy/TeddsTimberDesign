@@ -154,7 +154,7 @@ namespace TeddsTimberDesign
                     { "util", util },
                     { "material", material },
                     { "strength", strengthClass },
-                    // { "outputRtf", outputRtf }
+                    { "outputRtf", outputRtf }
                 });
             }
 
