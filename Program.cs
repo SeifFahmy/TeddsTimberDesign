@@ -1,15 +1,6 @@
 ﻿
 using System;
-using System.Diagnostics;
-using System.Windows;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Runtime.InteropServices;
-using Tekla.Structural.InteropAssemblies.TeddsCalc;
-using Tekla.Structural.InteropAssemblies.Tedds;
 using Newtonsoft.Json;
 
 
@@ -17,39 +8,35 @@ namespace TeddsTimberDesign
 {
     class Program
     {
-        static void Main(string[] args)
+        static string Main(string[] args)
         {
-            string parentWindow = "Code";
+            if (args.Length != 2)
+            {
+                return "invalid number of arguments passed";
+            }
+
+            string parentWindow = args[0];
+            string jsonData = args[1];
+
             TeddsApplication.SetUpTeddsWindow(parentWindow);
             TeddsApplication.ShowInitialWindow();
 
-            // simulate data from electron
-            string jsonData = @"[
-                {
-                    ""id"": 1,
-                    ""moment"": 123,
-                    ""length"": 3
-                },
-                {
-                    ""id"": 2,
-                    ""moment"": 50,
-                    ""length"": 5
-                },
-            ]";
             var parsedJson = JsonConvert.DeserializeObject<List<MemberData>>(jsonData);
 
-            var results = TeddsApplication.DesignMember(parsedJson);
-            var resultsJson = JsonConvert.SerializeObject(results);
-
-            Console.WriteLine(resultsJson);
+            var results = TeddsApplication.DesignMembers(parsedJson);
+            return JsonConvert.SerializeObject(results);
         }
 
     }
 
     public class MemberData
     {
-        public string Id { get; set; }
-        public int Moment { get; set; }
-        public bool Length { get; set; }
+        public int Id { get; set; }
+        public double MomentMajor { get; set; }
+        public double MomentMinor { get; set; }
+        public double ShearMajor { get; set; }
+        public double ShearMinor { get; set; }
+        public double Axial { get; set; }
+        public double Length { get; set; }
     }
 }
