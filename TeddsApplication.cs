@@ -111,7 +111,7 @@ namespace TeddsTimberDesign
                 calculator.Functions.SetVar("F_{z,d_s1}", Math.Abs(member.ShearMinor), "kN");
                 calculator.Functions.SetVar("P_{d_s1}", Math.Abs(member.Axial), "kN");
 
-                string result = "fail";
+                string result = "FAIL";
                 double width, depth;
                 for (int i = 0; i < possibleSectionSizes.Count(); i++)
                 {
@@ -143,7 +143,7 @@ namespace TeddsTimberDesign
                 string material = calculator.Functions.GetVar("MemberType").ToString();
                 string strengthClass = calculator.Functions.GetVar("StrengthClass").ToString();
 
-                var outputRtf = calculator.GetOutput();
+                var outputpdf = calculator.GetOutput(OutputFormat.Pdf);
 
                 results.Add(new Dictionary<string, object>(){
                     { "id", member.Id },
@@ -154,7 +154,7 @@ namespace TeddsTimberDesign
                     { "util", util },
                     { "material", material },
                     { "strength", strengthClass },
-                    { "outputRtf", outputRtf }
+                    { "outputPdf", outputpdf }
                 });
             }
 
