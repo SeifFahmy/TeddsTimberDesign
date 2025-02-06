@@ -1,9 +1,12 @@
 using System;
+using System.IO;
+using System.Text;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using Tekla.Structural.InteropAssemblies.TeddsCalc;
+using RtfPipe;
 
 
 namespace TeddsTimberDesign
@@ -14,7 +17,7 @@ namespace TeddsTimberDesign
 
         static readonly string calcFileName = "$(SysLbrDir)Timber member design-EN1995-si-engb.lbr";
         static readonly string calcItemName = "Timber member design";
-        static readonly Calculator calculator = new Calculator();
+        static readonly Calculator calculator = new();
 
         /// <summary>
         /// This class brings the tedds window to the front and makes it a child of some chosen application.
@@ -105,8 +108,8 @@ namespace TeddsTimberDesign
                 if (member.Axial >= 0) { calculator.Functions.SetVar("_AxialForce_{s1}", "Compression"); }
                 else { calculator.Functions.SetVar("_AxialForce_{s1}", "Tension"); }
 
-                calculator.Functions.SetVar("M_{y,d_s1}", member.MomentMajor, "kNm");
-                calculator.Functions.SetVar("M_{z,d_s1}", member.MomentMinor, "kNm");
+                calculator.Functions.SetVar("M_{y,d_s1}", Math.Abs(member.MomentMajor), "kNm");
+                calculator.Functions.SetVar("M_{z,d_s1}", Math.Abs(member.MomentMinor), "kNm");
                 calculator.Functions.SetVar("F_{y,d_s1}", Math.Abs(member.ShearMajor), "kN");
                 calculator.Functions.SetVar("F_{z,d_s1}", Math.Abs(member.ShearMinor), "kN");
                 calculator.Functions.SetVar("P_{d_s1}", Math.Abs(member.Axial), "kN");
@@ -143,18 +146,20 @@ namespace TeddsTimberDesign
                 string material = calculator.Functions.GetVar("MemberType").ToString();
                 string strengthClass = calculator.Functions.GetVar("StrengthClass").ToString();
 
-                var outputpdf = calculator.GetOutput(OutputFormat.Pdf);
+                string outputRtf = calculator.GetOutput();
+
+                Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+                string outputHtml = Rtf.ToHtml(outputRtf);
 
                 results.Add(new Dictionary<string, object>(){
                     { "id", member.Id },
-                    { "width", width },
-                    { "depth", depth },
+                    { "section", $"{width}x{depth}" },
                     { "result", result },
                     { "designMessage", designMessage },
                     { "util", util },
                     { "material", material },
                     { "strength", strengthClass },
-                    { "outputPdf", outputpdf }
+                    { "outputHtml", outputHtml }
                 });
             }
 

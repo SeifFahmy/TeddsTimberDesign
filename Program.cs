@@ -38,6 +38,6 @@ namespace TeddsTimberDesign
         public double ShearMajor { get; set; }
         public double ShearMinor { get; set; }
         public double Axial { get; set; }
-        public double Length { get; set; }
+        public bool IsAxialMember { get; set; }
     }
 }

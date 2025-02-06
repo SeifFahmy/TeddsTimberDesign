@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="RtfPipe" Version="2.0.7677.4303" />
     <PackageReference Include="TeklaTeddsAPI" Version="26.0.0" />
   </ItemGroup>
 
