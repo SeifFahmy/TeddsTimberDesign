@@ -12,7 +12,7 @@ namespace TeddsTimberDesign
         {
             if (args.Length != 2)
             {
-                Console.WriteLine("invalid number of arguments passed"); ;
+                throw new Exception("invalid number of arguments passed");
             }
 
             string parentWindow = args[0];
