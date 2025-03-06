@@ -75,30 +75,11 @@ namespace TeddsTimberDesign
         #endregion
 
         #region Member design
-
-        class SectionSize
-        {
-            public int Width { get; set; }
-            public int Depth { get; set; }
-        }
-
         /// <summary>
         /// This takes the previously user-defined material values, adds to them the member-specific variables, and runs the calculation. 
         /// </summary> 
         public static List<Dictionary<string, object>> DesignMembers(List<MemberData> memberData)
         {
-            var possibleSectionSizes = new List<SectionSize>() {
-                new SectionSize {Width=120, Depth=280},
-                new SectionSize {Width=160, Depth=360},
-                new SectionSize {Width=160, Depth=440},
-                new SectionSize {Width=200, Depth=520},
-                new SectionSize {Width=280, Depth=600},
-                new SectionSize {Width=320, Depth=680},
-                new SectionSize {Width=320, Depth=760},
-                new SectionSize {Width=320, Depth=840},
-                new SectionSize {Width=360, Depth=920},
-                new SectionSize {Width=360, Depth=1000},
-            };
 
             calculator.Functions.SetVar("_CalcUI", 0);
 
@@ -114,10 +95,29 @@ namespace TeddsTimberDesign
                 calculator.Functions.SetVar("F_{z,d_s1}", Math.Abs(member.ShearMinor), "kN");
                 calculator.Functions.SetVar("P_{d_s1}", Math.Abs(member.Axial), "kN");
 
+                string material = calculator.Functions.GetVar("MemberType").ToString();
+
+                List<SectionSizeData> possibleSectionSizes;
+                if (material == "Glulam" && member.IsAxialMember)
+                {
+                    possibleSectionSizes = SectionSizes.glulamColumnSectionSizes;
+                }
+                else if (material == "Glulam" && !member.IsAxialMember)
+                {
+                    possibleSectionSizes = SectionSizes.glulamBeamSectionSizes;
+                }
+                else if (material == "Timber" && member.IsAxialMember)
+                {
+                    possibleSectionSizes = SectionSizes.timberColumnSectionSizes;
+                }
+                else
+                {
+                    possibleSectionSizes = SectionSizes.timberBeamSectionSizes;
+                }
+
                 string result = "FAIL";
                 var stabilityCheck = new OwnTimberDesign.StabilityResult { Result = "FAIL", StabilityRatio = -1 };
-
-                for (int i = 0; i < possibleSectionSizes.Count(); i++)
+                for (int i = 0; i < possibleSectionSizes.Count; i++)
                 {
                     var section = possibleSectionSizes[i];
                     calculator.Functions.SetVar("b_{s1}", section.Width, "mm");
@@ -148,7 +148,6 @@ namespace TeddsTimberDesign
 
                 double util = Math.Round(calculator.Functions.GetVar("_OverallUtilisation_{s1}").ToDouble(), 2);
                 string designMessage = calculator.Functions.GetVar("_OverallStatusMessage_{s1}").ToString();
-                string material = calculator.Functions.GetVar("MemberType").ToString();
                 string strengthClass = calculator.Functions.GetVar("StrengthClass").ToString();
 
                 string outputRtf = calculator.GetOutput();
@@ -172,6 +171,51 @@ namespace TeddsTimberDesign
         }
         #endregion
     }
+
+    #region Section Sizes
+    class SectionSizeData
+    {
+        public int Width { get; set; }
+        public int Depth { get; set; }
+    }
+
+    static class SectionSizes
+    {
+        public static readonly List<SectionSizeData> glulamBeamSectionSizes = new() {
+            new SectionSizeData {Width=120, Depth=280},
+            new SectionSizeData {Width=160, Depth=360},
+            new SectionSizeData {Width=160, Depth=440},
+            new SectionSizeData {Width=200, Depth=520},
+            new SectionSizeData {Width=280, Depth=600},
+            new SectionSizeData {Width=320, Depth=680},
+            new SectionSizeData {Width=320, Depth=760},
+            new SectionSizeData {Width=320, Depth=840},
+            new SectionSizeData {Width=360, Depth=920},
+            new SectionSizeData {Width=360, Depth=1000},
+            };
+        public static readonly List<SectionSizeData> timberBeamSectionSizes = new() {
+            new SectionSizeData {Width=75, Depth=150},
+            new SectionSizeData {Width=100, Depth=200},
+            new SectionSizeData {Width=100, Depth=250},
+            new SectionSizeData {Width=150, Depth=275},
+            new SectionSizeData {Width=150, Depth=300},
+        };
+        public static readonly List<SectionSizeData> glulamColumnSectionSizes = new() {
+            new SectionSizeData {Width=200, Depth=200},
+            new SectionSizeData {Width=240, Depth=240},
+            new SectionSizeData {Width=280, Depth=280},
+            new SectionSizeData {Width=320, Depth=320},
+            new SectionSizeData {Width=400, Depth=400},
+        };
+        public static readonly List<SectionSizeData> timberColumnSectionSizes = new() {
+            new SectionSizeData {Width=100, Depth=100},
+            new SectionSizeData {Width=150, Depth=150},
+            new SectionSizeData {Width=200, Depth=200},
+            new SectionSizeData {Width=250, Depth=250},
+            new SectionSizeData {Width=300, Depth=300},
+        };
+    }
+    #endregion
 
     #region Misc
     /// <summary>This class was present in Tedds's own API Tester tool - it brings the Tedds window to the front.</summary> 

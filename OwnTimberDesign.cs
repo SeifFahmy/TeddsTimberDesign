@@ -55,7 +55,7 @@ namespace TeddsTimberDesign
         }
         #endregion
 
-        #region Stability checks
+        #region Beam stability check
         public static StabilityResult StabilityCheck(Calculator calculator, double length, bool isColumn)
         {
             if (isColumn) { return ColumnStabilityCheck(calculator, length); }
@@ -121,7 +121,9 @@ namespace TeddsTimberDesign
 
             return new StabilityResult { Result = result, StabilityRatio = stabilityCheck };
         }
+        #endregion
 
+        #region Column stability check
         public static StabilityResult ColumnStabilityCheck(Calculator calculator, double length)
         {
             // design to EC5-1 cl.6.3.2
