@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Tekla.Structural.InteropAssemblies.TeddsCalc;
 
@@ -20,6 +21,7 @@ namespace TeddsTimberDesign
             public double StabilityRatio { get; set; }
         }
 
+        #region Deflection Checks
         public static double CalculateEffectiveUDL(double robotDeflection, double robotE, double robotG, double robotA, double robotI, double span)
         {
             // bending deflection = 5wL^4/384EI
@@ -51,7 +53,9 @@ namespace TeddsTimberDesign
 
             return new DeflectionResult { Result = result, Deflection = finalDeflection };
         }
+        #endregion
 
+        #region Stability checks
         public static StabilityResult StabilityCheck(Calculator calculator, double length, bool isColumn)
         {
             if (isColumn) { return ColumnStabilityCheck(calculator, length); }
@@ -153,30 +157,30 @@ namespace TeddsTimberDesign
             double k_z = 0.5 * (1 + beta_c * (relativeSlendernessMinor - 0.3) + Math.Pow(relativeSlendernessMinor, 2));
             double k_cz = 1 / (k_z + Math.Sqrt(Math.Pow(k_z, 2) - Math.Pow(relativeSlendernessMinor, 2)));
 
-            double k_y = 0.5 * (1 + beta_c * (relativeSlendernessMinor - 0.3) + Math.Pow(relativeSlendernessMinor, 2));
-            double k_cy = 1 / (k_y + Math.Sqrt(Math.Pow(k_y, 2) - Math.Pow(relativeSlendernessMinor, 2)));
+            double k_y = 0.5 * (1 + beta_c * (relativeSlendernessMajor - 0.3) + Math.Pow(relativeSlendernessMajor, 2));
+            double k_cy = 1 / (k_y + Math.Sqrt(Math.Pow(k_y, 2) - Math.Pow(relativeSlendernessMajor, 2)));
 
             double majorBendingStress = calculator.Functions.GetVar("""\73_{m,y,d_s1}""").ToDouble();
             double majorBendingStrength = calculator.Functions.GetVar("f_{m,y,d_s1}").ToDouble();
 
-            double minorBendingStress = calculator.Functions.GetVar("""\73_{m,z,d_s1}""").ToDouble();
-            double minorBendingStrength = calculator.Functions.GetVar("f_{m,z,d_s1}").ToDouble();
+            double minorBendingStress = calculator.Functions.GetVar("""\73_{m,z,d}""").ToDouble();
+            double minorBendingStrength = calculator.Functions.GetVar("f_{m,z,d}").ToDouble();
 
             double compressiveStress = calculator.Functions.GetVar("""\73_{c,0,d_s1}""").ToDouble();
             double compressiveStrength = calculator.Functions.GetVar("f_{c,0,d_s1}").ToDouble();
 
             double km = 0.7; // rectangular section
 
-            double stabilityCheckMajor = compressiveStress / (k_cy * compressiveStrength) + majorBendingStress / majorBendingStrength + km * minorBendingStress / minorBendingStrength;
-            double stabilityCheckMinor = compressiveStress / (k_cz * compressiveStrength) + km * majorBendingStress / majorBendingStrength + minorBendingStress / minorBendingStrength;
+            double minorBendingComponent = minorBendingStress == 0 ? 0 : minorBendingStress / minorBendingStrength;
+            double stabilityCheckMajor = compressiveStress / (k_cy * compressiveStrength) + majorBendingStress / majorBendingStrength + km * minorBendingComponent;
+            double stabilityCheckMinor = compressiveStress / (k_cz * compressiveStrength) + km * majorBendingStress / majorBendingStrength + minorBendingComponent;
 
             double stabilityCheck = Math.Max(stabilityCheckMajor, stabilityCheckMinor);
             string result = stabilityCheck <= 1 ? "PASS" : "FAIL";
 
-            System.Console.WriteLine(result, stabilityCheck);
-
             return new StabilityResult { Result = result, StabilityRatio = stabilityCheck };
         }
+        #endregion
 
     }
 }
