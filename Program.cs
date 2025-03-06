@@ -21,13 +21,19 @@ namespace TeddsTimberDesign
             TeddsApplication.SetUpTeddsWindow(parentWindow);
             TeddsApplication.ShowInitialWindow();
 
-            var parsedJson = JsonConvert.DeserializeObject<List<MemberData>>(jsonData);
+            var parsedJson = JsonConvert.DeserializeObject<RobotData>(jsonData);
 
             var results = TeddsApplication.DesignMembers(parsedJson);
             var jsonResults = JsonConvert.SerializeObject(results);
             System.Console.WriteLine(jsonResults);
         }
 
+    }
+
+    public class RobotData
+    {
+        public MaterialData MaterialData { get; set; }
+        public List<MemberData> MemberData { get; set; }
     }
 
     public class MemberData
@@ -40,5 +46,14 @@ namespace TeddsTimberDesign
         public double ShearMinor { get; set; }
         public double Axial { get; set; }
         public bool IsAxialMember { get; set; }
+        public double Deflection { get; set; }
+        public double Area { get; set; }
+        public double SecondMomentOfArea { get; set; }
+    }
+
+    public class MaterialData
+    {
+        public double RobotE { get; set; }
+        public double RobotG { get; set; }
     }
 }
