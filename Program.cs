@@ -25,7 +25,7 @@ namespace TeddsTimberDesign
 
             var results = TeddsApplication.DesignMembers(parsedJson);
             var jsonResults = JsonConvert.SerializeObject(results);
-            // System.Console.WriteLine(jsonResults);
+            System.Console.WriteLine(jsonResults);
         }
 
     }

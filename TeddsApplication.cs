@@ -80,7 +80,6 @@ namespace TeddsTimberDesign
         /// </summary> 
         public static List<Dictionary<string, object>> DesignMembers(List<MemberData> memberData)
         {
-
             calculator.Functions.SetVar("_CalcUI", 0);
 
             var results = new List<Dictionary<string, object>>();
@@ -136,10 +135,10 @@ namespace TeddsTimberDesign
                     }
 
                     double currentUtil = calculator.Functions.GetVar("_OverallUtilisation_{s1}").ToDouble();
-                    if (currentUtil > 2)
+                    if (currentUtil > 2 && i < possibleSectionSizes.Count)
                     {
                         // given the section is far too small, skipping the next section saves time given it's likely also failing
-                        i = Math.Min(i + 1, possibleSectionSizes.Count() - 2);
+                        i = Math.Min(i + 1, possibleSectionSizes.Count - 2);
                     }
                 }
 

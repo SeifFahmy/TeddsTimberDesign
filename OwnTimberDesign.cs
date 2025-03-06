@@ -38,12 +38,17 @@ namespace TeddsTimberDesign
         public static DeflectionResult DeflectionCheck(Calculator calculator, double UDL, double span, double limitRatio)
         {
             // design to EC5-1 cl.2.2.3 and cl.7.2
+
             double A = calculator.Functions.GetVar("A_{s1}").ToDouble();
             double I = calculator.Functions.GetVar("I_{y_s1}").ToDouble();
             double E = calculator.Functions.GetVar("E_{0.mean}").ToDouble();
-            double G = calculator.Functions.GetVar("G_{g.mean}").ToDouble();
             double k_def = calculator.Functions.GetVar("k_{def_s1}").ToDouble();
             double quasiPermFactor = calculator.Functions.GetVar("""\79_{2_s1}""").ToDouble();
+
+            double G;
+            string material = calculator.Functions.GetVar("MemberType").ToString();
+            if (material == "Glulam") { G = calculator.Functions.GetVar("G_{g.mean}").ToDouble(); }
+            else { G = calculator.Functions.GetVar("G_{mean}").ToDouble(); }
 
             double instantDeflection = 5 * UDL * Math.Pow(span, 4) / (384 * E * I) + UDL * Math.Pow(span, 2) / (8 * A * G);
             double finalDeflection = instantDeflection * (1 + k_def);
@@ -65,10 +70,14 @@ namespace TeddsTimberDesign
         public static StabilityResult BeamStabilityCheck(Calculator calculator, double length)
         {
             // design to EC5-1 cl.6.3.3
-            double E0_05 = calculator.Functions.GetVar("E_{0.g.05}").ToDouble();
             double Iz = calculator.Functions.GetVar("I_{z_s1}").ToDouble();
             double Itor = calculator.Functions.GetVar("I_{tor_s1}").ToDouble();
             double Wy = calculator.Functions.GetVar("W_{y_s1}").ToDouble();
+
+            double E0_05;
+            string material = calculator.Functions.GetVar("MemberType").ToString();
+            if (material == "Glulam") { E0_05 = calculator.Functions.GetVar("E_{0.g.05}").ToDouble(); }
+            else { E0_05 = calculator.Functions.GetVar("E_{0.05}").ToDouble(); }
 
             double G0_05 = E0_05 / 16;
             double effectiveLength = length * 0.9; // assuming UDL on simply supported beam - table 6.1
@@ -92,12 +101,14 @@ namespace TeddsTimberDesign
             }
 
             double iz = calculator.Functions.GetVar("i_{z_s1}").ToDouble();
-            double f_c0k = calculator.Functions.GetVar("f_{c.0.g.k}").ToDouble();
+
+            double f_c0k;
+            if (material == "Glulam") { f_c0k = calculator.Functions.GetVar("f_{c.0.g.k}").ToDouble(); }
+            else { f_c0k = calculator.Functions.GetVar("f_{c.0.k}").ToDouble(); }
 
             double slendernessMinor = effectiveLength / iz;
             double relativeCompressionSlenderness = slendernessMinor / Math.PI * Math.Sqrt(f_c0k / E0_05);
 
-            string material = calculator.Functions.GetVar("MemberType").ToString();
             double beta_c;
             if (material == "Glulam")
             {
@@ -129,8 +140,16 @@ namespace TeddsTimberDesign
             // design to EC5-1 cl.6.3.2
             double iy = calculator.Functions.GetVar("i_{y_s1}").ToDouble();
             double iz = calculator.Functions.GetVar("i_{z_s1}").ToDouble();
-            double f_c0k = calculator.Functions.GetVar("f_{c.0.g.k}").ToDouble();
-            double E0_05 = calculator.Functions.GetVar("E_{0.g.05}").ToDouble();
+
+            string material = calculator.Functions.GetVar("MemberType").ToString();
+
+            double E0_05;
+            if (material == "Glulam") { E0_05 = calculator.Functions.GetVar("E_{0.g.05}").ToDouble(); }
+            else { E0_05 = calculator.Functions.GetVar("E_{0.05}").ToDouble(); }
+
+            double f_c0k;
+            if (material == "Glulam") { f_c0k = calculator.Functions.GetVar("f_{c.0.g.k}").ToDouble(); }
+            else { f_c0k = calculator.Functions.GetVar("f_{c.0.k}").ToDouble(); }
 
             double effectiveLength = length * 0.9; // assuming UDL on simply supported beam - table 6.1
 
@@ -145,7 +164,6 @@ namespace TeddsTimberDesign
                 return new StabilityResult { Result = "PASS", StabilityRatio = Math.Max(relativeSlendernessMajor, relativeSlendernessMinor) };
             }
 
-            string material = calculator.Functions.GetVar("MemberType").ToString();
             double beta_c;
             if (material == "Glulam")
             {
@@ -179,6 +197,8 @@ namespace TeddsTimberDesign
 
             double stabilityCheck = Math.Max(stabilityCheckMajor, stabilityCheckMinor);
             string result = stabilityCheck <= 1 ? "PASS" : "FAIL";
+
+            System.Console.WriteLine(result);
 
             return new StabilityResult { Result = result, StabilityRatio = stabilityCheck };
         }
