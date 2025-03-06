@@ -52,6 +52,12 @@ namespace TeddsTimberDesign
             return new DeflectionResult { Result = result, Deflection = finalDeflection };
         }
 
+        public static StabilityResult StabilityCheck(Calculator calculator, double length, bool isColumn)
+        {
+            if (isColumn) { return ColumnStabilityCheck(calculator, length); }
+            else { return BeamStabilityCheck(calculator, length); }
+        }
+
         public static StabilityResult BeamStabilityCheck(Calculator calculator, double length)
         {
             // design to EC5-1 cl.6.3.3

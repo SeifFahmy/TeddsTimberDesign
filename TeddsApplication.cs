@@ -127,7 +127,7 @@ namespace TeddsTimberDesign
                     calculator.InitializeCalc(calcFileName, calcItemName, variables);
 
                     string strengthResult = calculator.Functions.GetVar("_CalcResult").ToString().ToUpper();
-                    stabilityCheck = OwnTimberDesign.BeamStabilityCheck(calculator, member.Length);
+                    stabilityCheck = OwnTimberDesign.StabilityCheck(calculator, member.Length, member.IsAxialMember);
 
                     if (strengthResult == "PASS" && stabilityCheck.Result == "PASS")
                     {
