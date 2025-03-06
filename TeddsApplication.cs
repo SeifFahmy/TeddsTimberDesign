@@ -152,18 +152,29 @@ namespace TeddsTimberDesign
                         // given the section is far too small, skipping the next section saves time given it's likely also failing
                         i = Math.Min(i + 1, possibleSectionSizes.Count - 2);
                     }
-                    // break;
                 }
 
                 double width = calculator.Functions.GetVar("b").ToDouble("mm");
                 double depth = calculator.Functions.GetVar("h").ToDouble("mm");
 
                 double strengthUtil = Math.Round(calculator.Functions.GetVar("_OverallUtilisation_{s1}").ToDouble(), 2);
-                double util = Math.Max(strengthUtil, stabilityCheck.StabilityUtil);
+                double util = new List<double>() { strengthUtil, stabilityCheck.StabilityUtil, deflectionCheck.DeflectionUtil }.Max();
 
-                string designMessage = calculator.Functions.GetVar("_OverallStatusMessage_{s1}").ToString();
+                string designMessage;
+                if (util - strengthUtil < 0.001)
+                {
+                    designMessage = calculator.Functions.GetVar("_OverallStatusMessage_{s1}").ToString();
+                }
+                else if (util - stabilityCheck.StabilityUtil < 0.001)
+                {
+                    designMessage = stabilityCheck.StabilityMessage;
+                }
+                else
+                {
+                    designMessage = deflectionCheck.DeflectionMessage;
+                }
+
                 string strengthClass = calculator.Functions.GetVar("StrengthClass").ToString();
-
                 string outputRtf = calculator.GetOutput();
 
                 Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);

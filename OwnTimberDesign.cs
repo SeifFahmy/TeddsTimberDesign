@@ -14,6 +14,7 @@ namespace TeddsTimberDesign
             public string Result { get; set; }
             public double DeflectionUtil { get; set; }
             public string DeflectionHtml { get; set; }
+            public string DeflectionMessage { get; set; }
         }
 
         public class StabilityResult
@@ -21,6 +22,7 @@ namespace TeddsTimberDesign
             public string Result { get; set; }
             public double StabilityUtil { get; set; }
             public string StabilityHtml { get; set; }
+            public string StabilityMessage { get; set; }
 
         }
 
@@ -57,7 +59,7 @@ namespace TeddsTimberDesign
 
             double deflectionLimit = span / limitRatio;
             string result = finalDeflection <= deflectionLimit ? "PASS" : "FAIL";
-            string designMessage = result == "PASS" ? "PASS - Allowable deflection exceeds final deflection" : "FAIL - Final deflection exceeds allowable deflection";
+            string designMessage = result == "PASS" ? "PASS - Allowable deflection greater than final deflection" : "FAIL - Final deflection greater than allowable deflection";
 
             // based on html obtained from the strength verification and "member analysis and design" calc
             string teddsCalcHtml = $"""
@@ -86,7 +88,7 @@ namespace TeddsTimberDesign
             """;
             teddsCalcHtml = teddsCalcHtml.ReplaceLineEndings("");
 
-            return new DeflectionResult { Result = result, DeflectionUtil = finalDeflection, DeflectionHtml = teddsCalcHtml };
+            return new DeflectionResult { Result = result, DeflectionUtil = finalDeflection / deflectionLimit, DeflectionHtml = teddsCalcHtml, DeflectionMessage = designMessage };
         }
         #endregion
 
@@ -188,7 +190,7 @@ namespace TeddsTimberDesign
             """;
             teddsCalcHtml = teddsCalcHtml.ReplaceLineEndings("");
 
-            return new StabilityResult { Result = result, StabilityUtil = stabilityCheck, StabilityHtml = teddsCalcHtml };
+            return new StabilityResult { Result = result, StabilityUtil = stabilityCheck, StabilityHtml = teddsCalcHtml, StabilityMessage = designMessage };
         }
         #endregion
 
@@ -255,7 +257,7 @@ namespace TeddsTimberDesign
                 teddsCalcHtmlCheckNotRequired = teddsCalcHtmlCheckNotRequired.ReplaceLineEndings("");
 
 
-                return new StabilityResult { Result = "PASS", StabilityUtil = Math.Max(relativeSlendernessMajor, relativeSlendernessMinor), StabilityHtml = teddsCalcHtmlCheckNotRequired };
+                return new StabilityResult { Result = "PASS", StabilityUtil = Math.Max(relativeSlendernessMajor, relativeSlendernessMinor), StabilityHtml = teddsCalcHtmlCheckNotRequired, StabilityMessage = "Column stability check not required" };
             }
 
             double beta_c;
@@ -357,7 +359,7 @@ namespace TeddsTimberDesign
                 """;
             teddsCalcHtml = teddsCalcHtml.ReplaceLineEndings("");
 
-            return new StabilityResult { Result = result, StabilityUtil = stabilityCheck, StabilityHtml = teddsCalcHtml };
+            return new StabilityResult { Result = result, StabilityUtil = stabilityCheck, StabilityHtml = teddsCalcHtml, StabilityMessage = designMessage };
         }
         #endregion
 
