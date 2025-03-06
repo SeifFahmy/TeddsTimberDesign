@@ -13,6 +13,7 @@ namespace TeddsTimberDesign
         {
             public string Result { get; set; }
             public double DeflectionUtil { get; set; }
+            public string DeflectionHtml { get; set; }
         }
 
         public class StabilityResult
@@ -55,8 +56,35 @@ namespace TeddsTimberDesign
 
             double deflectionLimit = span / limitRatio;
             string result = finalDeflection <= deflectionLimit ? "PASS" : "FAIL";
+            string designMessage = result == "PASS" ? "PASS - Allowable deflection exceeds final deflection" : "";
 
-            return new DeflectionResult { Result = result, DeflectionUtil = finalDeflection };
+            // based on html obtained from the strength verification
+            string teddsCalcHtml = $"""
+                <div style="font-size:12pt;font-family:Arial, sans-serif; background-color:gray;">
+                    <h5 style="text-align:left;line-height:1.6;font-family:Arial, sans-serif;font-size:9pt;margin:5.3px 0 0 23.8px;">Check deflection - Section 7.2</h5>
+                    <div style="display:flex; flex-flow: column nowrap;">
+                        <div style="display:flex; flex-flow: row nowrap;text-align:left;line-height:1.6;font-family:Arial, sans-serif;font-size:9pt">
+                            <p style="flex: 1 1 0;">Instantaneous deflection</p>
+                            <p style="flex: 1 1 0;">δ<sub>y</sub> = {Math.Round(instantDeflection * 1000)} mm</p>
+                        </div>
+                        <div style="display:flex; flex-flow: row nowrap;text-align:left;line-height:1.6;font-family:Arial, sans-serif;font-size:9pt">
+                            <p style="flex: 1 1 0;">Final deflection with creep</p>
+                            <p style="flex: 1 1 0;">δ<sub>y,Final</sub> = δ<sub>y</sub> x (1 + k<sub>def</sub>) = {Math.Round(finalDeflection * 1000)} mm</p>
+                        </div>
+                        <div style="display:flex; flex-flow: row nowrap;text-align:left;line-height:1.6;font-family:Arial, sans-serif;font-size:9pt">
+                            <p style="flex: 1 1 0;">Allowable deflection</p>
+                            <p style="flex: 1 1 0;">δ<sub>y,Allowable</sub> = L / {limitRatio} = {Math.Round(deflectionLimit * 1000)} mm</p>
+                        </div>
+                        <div style="display:flex; flex-flow: row nowrap;text-align:left;line-height:1.6;font-family:Arial, sans-serif;font-size:9pt">
+                            <p style="flex: 1 1 0;"> </p>
+                            <p style="flex: 1 1 0;">δ<sub>y,Final</sub> / δ<sub>y,Allowable</sub> = {Math.Round(finalDeflection / deflectionLimit * 1000) / 1000}</p>
+                        </div>
+                        <p style="text-align:right; font-style:italic; font-size:9pt;"><strong><em>{designMessage}</em></strong></p>
+                    </div>
+                </div>
+            """;
+
+            return new DeflectionResult { Result = result, DeflectionUtil = finalDeflection, DeflectionHtml = teddsCalcHtml };
         }
         #endregion
 
