@@ -12,13 +12,14 @@ namespace TeddsTimberDesign
         public class DeflectionResult
         {
             public string Result { get; set; }
-            public double Deflection { get; set; }
+            public double DeflectionUtil { get; set; }
         }
 
         public class StabilityResult
         {
             public string Result { get; set; }
-            public double StabilityRatio { get; set; }
+            public double StabilityUtil { get; set; }
+
         }
 
         #region Deflection Checks
@@ -28,17 +29,16 @@ namespace TeddsTimberDesign
             // shear deflection = wL^2 / 8AG
             // need to rearrange above equations to get w as a function of instataneous deflection
             // calculating deflections for different section sizes is based off this
-            double effective_udl_bending_formula = 5 * Math.Pow(span, 4) / (384 * robotE * robotI);
-            double effective_udl_shear_formula = Math.Pow(span, 2) / (8 * robotA * robotG);
-            double effective_udl = robotDeflection / (effective_udl_bending_formula + effective_udl_shear_formula);
+            double effectiveUdlBendingFormula = 5 * Math.Pow(span, 4) / (384 * robotE * robotI);
+            double effectiveUdlShearFormula = Math.Pow(span, 2) / (8 * robotA * robotG);
+            double effectiveUdl = robotDeflection / (effectiveUdlBendingFormula + effectiveUdlShearFormula);
 
-            return effective_udl;
+            return effectiveUdl;
         }
 
         public static DeflectionResult DeflectionCheck(Calculator calculator, double UDL, double span, double limitRatio)
         {
             // design to EC5-1 cl.2.2.3 and cl.7.2
-
             double A = calculator.Functions.GetVar("A_{s1}").ToDouble();
             double I = calculator.Functions.GetVar("I_{y_s1}").ToDouble();
             double E = calculator.Functions.GetVar("E_{0.mean}").ToDouble();
@@ -53,10 +53,10 @@ namespace TeddsTimberDesign
             double instantDeflection = 5 * UDL * Math.Pow(span, 4) / (384 * E * I) + UDL * Math.Pow(span, 2) / (8 * A * G);
             double finalDeflection = instantDeflection * (1 + k_def);
 
-            double deflectionLimit = span * 1000 / limitRatio;
+            double deflectionLimit = span / limitRatio;
             string result = finalDeflection <= deflectionLimit ? "PASS" : "FAIL";
 
-            return new DeflectionResult { Result = result, Deflection = finalDeflection };
+            return new DeflectionResult { Result = result, DeflectionUtil = finalDeflection };
         }
         #endregion
 
@@ -130,7 +130,7 @@ namespace TeddsTimberDesign
             double stabilityCheck = Math.Pow(bendingStress / (k_crit * bendingStrength), 2) + compressiveStress / (k_cz * compressiveStrength);
             string result = stabilityCheck <= 1 ? "PASS" : "FAIL";
 
-            return new StabilityResult { Result = result, StabilityRatio = stabilityCheck };
+            return new StabilityResult { Result = result, StabilityUtil = stabilityCheck };
         }
         #endregion
 
@@ -161,7 +161,7 @@ namespace TeddsTimberDesign
 
             if (relativeSlendernessMajor <= 0.3 && relativeSlendernessMinor <= 0.3)
             {
-                return new StabilityResult { Result = "PASS", StabilityRatio = Math.Max(relativeSlendernessMajor, relativeSlendernessMinor) };
+                return new StabilityResult { Result = "PASS", StabilityUtil = Math.Max(relativeSlendernessMajor, relativeSlendernessMinor) };
             }
 
             double beta_c;
@@ -198,9 +198,7 @@ namespace TeddsTimberDesign
             double stabilityCheck = Math.Max(stabilityCheckMajor, stabilityCheckMinor);
             string result = stabilityCheck <= 1 ? "PASS" : "FAIL";
 
-            System.Console.WriteLine(result);
-
-            return new StabilityResult { Result = result, StabilityRatio = stabilityCheck };
+            return new StabilityResult { Result = result, StabilityUtil = stabilityCheck };
         }
         #endregion
 

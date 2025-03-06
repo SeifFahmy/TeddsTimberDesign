@@ -78,9 +78,13 @@ namespace TeddsTimberDesign
         /// <summary>
         /// This takes the previously user-defined material values, adds to them the member-specific variables, and runs the calculation. 
         /// </summary> 
-        public static List<Dictionary<string, object>> DesignMembers(List<MemberData> memberData)
+        public static List<Dictionary<string, object>> DesignMembers(DesignData designData)
         {
             calculator.Functions.SetVar("_CalcUI", 0);
+
+            var memberData = designData.RobotMemberData;
+            var robotMaterialData = designData.RobotMaterialData;
+            var deflectionLimit = designData.BeamDeflectionLimitRatio;
 
             var results = new List<Dictionary<string, object>>();
             foreach (var member in memberData)
@@ -114,8 +118,11 @@ namespace TeddsTimberDesign
                     possibleSectionSizes = SectionSizes.timberBeamSectionSizes;
                 }
 
+                double effectiveUdl = OwnTimberDesign.CalculateEffectiveUDL(member.Deflection, robotMaterialData.RobotE, robotMaterialData.RobotG, member.Area, member.SecondMomentOfArea, member.Length);
+
+                var stabilityCheck = new OwnTimberDesign.StabilityResult { Result = "FAIL", StabilityUtil = -1 };
+                var deflectionCheck = new OwnTimberDesign.DeflectionResult { Result = member.IsAxialMember ? "PASS" : "FAIL", DeflectionUtil = -1 }; // no deflection check for columns
                 string result = "FAIL";
-                var stabilityCheck = new OwnTimberDesign.StabilityResult { Result = "FAIL", StabilityRatio = -1 };
                 for (int i = 0; i < possibleSectionSizes.Count; i++)
                 {
                     var section = possibleSectionSizes[i];
@@ -128,7 +135,12 @@ namespace TeddsTimberDesign
                     string strengthResult = calculator.Functions.GetVar("_CalcResult").ToString().ToUpper();
                     stabilityCheck = OwnTimberDesign.StabilityCheck(calculator, member.Length, member.IsAxialMember);
 
-                    if (strengthResult == "PASS" && stabilityCheck.Result == "PASS")
+                    if (!member.IsAxialMember)
+                    {
+                        deflectionCheck = OwnTimberDesign.DeflectionCheck(calculator, effectiveUdl, member.Length, deflectionLimit);
+                    }
+
+                    if (strengthResult == "PASS" && stabilityCheck.Result == "PASS" && deflectionCheck.Result == "PASS")
                     {
                         result = "PASS";
                         break;
@@ -140,12 +152,15 @@ namespace TeddsTimberDesign
                         // given the section is far too small, skipping the next section saves time given it's likely also failing
                         i = Math.Min(i + 1, possibleSectionSizes.Count - 2);
                     }
+                    // break;
                 }
 
                 double width = calculator.Functions.GetVar("b").ToDouble("mm");
                 double depth = calculator.Functions.GetVar("h").ToDouble("mm");
 
-                double util = Math.Round(calculator.Functions.GetVar("_OverallUtilisation_{s1}").ToDouble(), 2);
+                double strengthUtil = Math.Round(calculator.Functions.GetVar("_OverallUtilisation_{s1}").ToDouble(), 2);
+                double util = Math.Max(strengthUtil, stabilityCheck.StabilityUtil);
+
                 string designMessage = calculator.Functions.GetVar("_OverallStatusMessage_{s1}").ToString();
                 string strengthClass = calculator.Functions.GetVar("StrengthClass").ToString();
 
