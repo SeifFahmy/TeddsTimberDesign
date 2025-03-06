@@ -89,6 +89,7 @@ AppPackages/
 # Others
 dummy_input_data.txt
 output.txt
+output.json
 .vscode/
 sql/
 *.Cache

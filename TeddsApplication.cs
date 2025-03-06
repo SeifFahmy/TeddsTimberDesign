@@ -120,8 +120,8 @@ namespace TeddsTimberDesign
 
                 double effectiveUdl = OwnTimberDesign.CalculateEffectiveUDL(member.Deflection, robotMaterialData.RobotE, robotMaterialData.RobotG, member.Area, member.SecondMomentOfArea, member.Length);
 
-                var stabilityCheck = new OwnTimberDesign.StabilityResult { Result = "FAIL", StabilityUtil = -1 };
-                var deflectionCheck = new OwnTimberDesign.DeflectionResult { Result = member.IsAxialMember ? "PASS" : "FAIL", DeflectionUtil = -1 }; // no deflection check for columns
+                var stabilityCheck = new OwnTimberDesign.StabilityResult { Result = "FAIL", StabilityUtil = -1, StabilityHtml = "" };
+                var deflectionCheck = new OwnTimberDesign.DeflectionResult { Result = member.IsAxialMember ? "PASS" : "FAIL", DeflectionUtil = -1, DeflectionHtml = "" }; // no deflection check for columns
                 string result = "FAIL";
                 for (int i = 0; i < possibleSectionSizes.Count; i++)
                 {
@@ -168,6 +168,7 @@ namespace TeddsTimberDesign
 
                 Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
                 string outputHtml = Rtf.ToHtml(outputRtf);
+                string finalOutputHtml = outputHtml + stabilityCheck.StabilityHtml + deflectionCheck.DeflectionHtml;
 
                 results.Add(new Dictionary<string, object>(){
                     { "id", member.Id },
@@ -177,7 +178,7 @@ namespace TeddsTimberDesign
                     { "util", util },
                     { "material", material },
                     { "strength", strengthClass },
-                    { "outputHtml", outputHtml }
+                    { "outputHtml", finalOutputHtml }
                 });
             }
 
