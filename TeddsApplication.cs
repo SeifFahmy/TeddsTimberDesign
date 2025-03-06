@@ -186,7 +186,7 @@ namespace TeddsTimberDesign
                     { "section", $"{width}x{depth}" },
                     { "result", result },
                     { "designMessage", designMessage },
-                    { "util", util },
+                    { "util", Math.Round(util * 1000) / 1000 },
                     { "material", material },
                     { "strength", strengthClass },
                     { "outputHtml", finalOutputHtml }
