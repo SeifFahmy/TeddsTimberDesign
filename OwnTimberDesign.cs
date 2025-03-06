@@ -20,6 +20,7 @@ namespace TeddsTimberDesign
         {
             public string Result { get; set; }
             public double StabilityUtil { get; set; }
+            public string StabilityHtml { get; set; }
 
         }
 
@@ -56,7 +57,7 @@ namespace TeddsTimberDesign
 
             double deflectionLimit = span / limitRatio;
             string result = finalDeflection <= deflectionLimit ? "PASS" : "FAIL";
-            string designMessage = result == "PASS" ? "PASS - Allowable deflection exceeds final deflection" : "";
+            string designMessage = result == "PASS" ? "PASS - Allowable deflection exceeds final deflection" : "FAIL - Final deflection exceeds allowable deflection";
 
             // based on html obtained from the strength verification
             string teddsCalcHtml = $"""
@@ -157,6 +158,33 @@ namespace TeddsTimberDesign
 
             double stabilityCheck = Math.Pow(bendingStress / (k_crit * bendingStrength), 2) + compressiveStress / (k_cz * compressiveStrength);
             string result = stabilityCheck <= 1 ? "PASS" : "FAIL";
+            string designMessage = result == "PASS" ? "PASS - Beam stability is accepted" : "FAIL - Beam stability is not acceptable";
+
+            // based on html obtained from the strength verification
+            string teddsCalcHtml = $"""
+                <div style="font-size:12pt;font-family:Arial, sans-serif; background-color:gray;">
+                    <h5 style="text-align:left;line-height:1.6;font-family:Arial, sans-serif;font-size:9pt;margin:5.3px 0 0 23.8px;">Check beams subject to either bedning or combined bending and compression - Section 6.3.3</h5>
+                    <div style="display:flex; flex-flow: column nowrap;">
+                        <div style="display:flex; flex-flow: row nowrap;text-align:left;line-height:1.6;font-family:Arial, sans-serif;font-size:9pt">
+                            <p style="flex: 1 1 0;">Fifth percentile shear modulus parallel to the grain</p>
+                            <p style="flex: 1 1 0;">G<sub>0.05</sub> = E<sub>0.05</sub> / 16 = {Math.Round(G0_05 / 1_000_000)} N/mm<sup>2</sup></p>
+                        </div>
+                        <div style="display:flex; flex-flow: row nowrap;text-align:left;line-height:1.6;font-family:Arial, sans-serif;font-size:9pt">
+                            <p style="flex: 1 1 0;">Torsional moment of inertia</p>
+                            <p style="flex: 1 1 0;">I<sub>tor</sub> = {Itor * Math.Pow(1000, 4)} mm<sup>4</sup></p>
+                        </div>
+                        <div style="display:flex; flex-flow: row nowrap;text-align:left;line-height:1.6;font-family:Arial, sans-serif;font-size:9pt">
+                            <p style="flex: 1 1 0;">Lateral buckling factor - exp 6.34</p>
+                            <p style="flex: 1 1 0;">k<sub>crit</sub> = {k_crit}</p>
+                        </div>
+                        <div style="display:flex; flex-flow: row nowrap;text-align:left;line-height:1.6;font-family:Arial, sans-serif;font-size:9pt">
+                            <p style="flex: 1 1 0;">Beam stability check - exp 6.35</p>
+                            <p style="flex: 1 1 0;">(σ<sub>m,y,d</sub> / (k<sub>crit</sub> x f<sub>m,y,d</sub>))<sup>2</sup> + σ<sub>c,0,d</sub> / (k<sub>c,z</sub> x f<sub>c,0,d</sub>) = {Math.Round(stabilityCheck * 1000) / 1000}</p>
+                        </div>
+                        <p style="text-align:right; font-style:italic; font-size:9pt;"><strong><em>{designMessage}</em></strong></p>
+                    </div>
+                </div>
+            """;
 
             return new StabilityResult { Result = result, StabilityUtil = stabilityCheck };
         }
