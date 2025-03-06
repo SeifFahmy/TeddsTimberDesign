@@ -33,6 +33,7 @@ namespace TeddsTimberDesign
     public class MemberData
     {
         public int Id { get; set; }
+        public double Length { get; set; }
         public double MomentMajor { get; set; }
         public double MomentMinor { get; set; }
         public double ShearMajor { get; set; }

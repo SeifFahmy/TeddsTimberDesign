@@ -87,6 +87,8 @@ csx/
 AppPackages/
 
 # Others
+dummy_input_data.txt
+output.txt
 .vscode/
 sql/
 *.Cache

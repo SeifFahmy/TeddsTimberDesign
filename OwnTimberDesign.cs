@@ -14,6 +14,12 @@ namespace TeddsTimberDesign
             public double Deflection { get; set; }
         }
 
+        public class StabilityResult
+        {
+            public string Result { get; set; }
+            public double StabilityRatio { get; set; }
+        }
+
         public static double CalculateEffectiveUDL(double robotDeflection, double robotE, double robotG, double robotA, double robotI, double span)
         {
             // bending deflection = 5wL^4/384EI
@@ -29,6 +35,7 @@ namespace TeddsTimberDesign
 
         public static DeflectionResult DeflectionCheck(double w, double teddsE, double teddsG, double teddsKdef, double teddsQuasiPermFactor, double width, double depth, double span, double limitRatio)
         {
+            // design to EC5-1 cl.2.2.3 and cl.7.2
             double A = width * depth;
             double I = width * Math.Pow(depth, 3) / 12;
 
@@ -39,6 +46,66 @@ namespace TeddsTimberDesign
             string result = finalDeflection <= deflectionLimit ? "PASS" : "FAIL";
 
             return new DeflectionResult { Result = result, Deflection = finalDeflection };
+        }
+
+        public static StabilityResult BeamStabilityCheck(Calculator calculator, double length)
+        {
+            // design to EC5-1 cl.6.3.3
+            double E0_05 = calculator.Functions.GetVar("E_{0.g.05}").ToDouble();
+            double Iz = calculator.Functions.GetVar("I_{z_s1}").ToDouble();
+            double Itor = calculator.Functions.GetVar("I_{tor_s1}").ToDouble();
+            double Wy = calculator.Functions.GetVar("W_{y_s1}").ToDouble();
+
+            double G0_05 = E0_05 / 16;
+            double effectiveLength = length * 0.9; // assuming UDL on simply supported beam - table 6.1
+            double criticalBendingStressMajor = Math.PI * Math.Sqrt(E0_05 * Iz * G0_05 * Itor) / (effectiveLength * Wy);
+
+            double f_mk = calculator.Functions.GetVar("f_{m.k}").ToDouble();
+            double relativeBendingSlenderness = Math.Sqrt(f_mk / criticalBendingStressMajor);
+
+            double k_crit;
+            if (relativeBendingSlenderness <= 0.75)
+            {
+                k_crit = 1;
+            }
+            else if (0.75 < relativeBendingSlenderness && relativeBendingSlenderness <= 1.4)
+            {
+                k_crit = 1.56 - 0.75 * relativeBendingSlenderness;
+            }
+            else
+            {
+                k_crit = 1 / Math.Pow(relativeBendingSlenderness, 2);
+            }
+
+            double iy = calculator.Functions.GetVar("i_{y_s1}").ToDouble();
+            double f_c0k = calculator.Functions.GetVar("f_{c.0.k}").ToDouble();
+
+            double slendernessMinor = effectiveLength / iy;
+            double relativeCompressionSlenderness = slendernessMinor / Math.PI * Math.Sqrt(f_c0k / E0_05);
+
+            string material = calculator.Functions.GetVar("MemberType").ToString();
+            double beta_c;
+            if (material == "Glulam")
+            {
+                beta_c = 0.1;
+            }
+            else
+            {
+                beta_c = 0.2;
+            }
+
+            double k_z = 0.5 * (1 + beta_c * (relativeCompressionSlenderness - 0.3) + Math.Pow(relativeCompressionSlenderness, 2));
+            double k_cz = 1 / (k_z + Math.Sqrt(Math.Pow(k_z, 2) - Math.Pow(relativeCompressionSlenderness, 2)));
+
+            double bendingStress = calculator.Functions.GetVar("""\73_{m,y,d_s1}""").ToDouble();
+            double bendingStrength = calculator.Functions.GetVar("f_{m,y,d_s1}").ToDouble();
+            double compressiveStress = calculator.Functions.GetVar("""\73_{c,0,d_s1}""").ToDouble();
+            double compressiveStrength = calculator.Functions.GetVar("f_{c,0,d_s1}").ToDouble();
+
+            double stabilityCheck = Math.Pow(bendingStress / (k_crit * bendingStrength), 2) + compressiveStress / (k_cz * compressiveStrength);
+            string result = stabilityCheck <= 1 ? "PASS" : "FAIL";
+
+            return new StabilityResult { Result = result, StabilityRatio = stabilityCheck };
         }
     }
 }

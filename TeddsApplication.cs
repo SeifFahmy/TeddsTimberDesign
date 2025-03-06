@@ -115,7 +115,8 @@ namespace TeddsTimberDesign
                 calculator.Functions.SetVar("P_{d_s1}", Math.Abs(member.Axial), "kN");
 
                 string result = "FAIL";
-                double width, depth;
+                var stabilityCheck = new OwnTimberDesign.StabilityResult { Result = "FAIL", StabilityRatio = -1 };
+
                 for (int i = 0; i < possibleSectionSizes.Count(); i++)
                 {
                     var section = possibleSectionSizes[i];
@@ -125,9 +126,12 @@ namespace TeddsTimberDesign
                     string variables = calculator.GetVariables();
                     calculator.InitializeCalc(calcFileName, calcItemName, variables);
 
-                    result = calculator.Functions.GetVar("_CalcResult").ToString().ToUpper();
-                    if (result == "PASS")
+                    string strengthResult = calculator.Functions.GetVar("_CalcResult").ToString().ToUpper();
+                    stabilityCheck = OwnTimberDesign.BeamStabilityCheck(calculator, member.Length);
+
+                    if (strengthResult == "PASS" && stabilityCheck.Result == "PASS")
                     {
+                        result = "PASS";
                         break;
                     }
 
@@ -139,8 +143,9 @@ namespace TeddsTimberDesign
                     }
                 }
 
-                width = calculator.Functions.GetVar("b").ToDouble("mm");
-                depth = calculator.Functions.GetVar("h").ToDouble("mm");
+                double width = calculator.Functions.GetVar("b").ToDouble("mm");
+                double depth = calculator.Functions.GetVar("h").ToDouble("mm");
+
                 double util = Math.Round(calculator.Functions.GetVar("_OverallUtilisation_{s1}").ToDouble(), 2);
                 string designMessage = calculator.Functions.GetVar("_OverallStatusMessage_{s1}").ToString();
                 string material = calculator.Functions.GetVar("MemberType").ToString();
