@@ -33,14 +33,18 @@ namespace TeddsTimberDesign
             return effective_udl;
         }
 
-        public static DeflectionResult DeflectionCheck(double w, double teddsE, double teddsG, double teddsKdef, double teddsQuasiPermFactor, double width, double depth, double span, double limitRatio)
+        public static DeflectionResult DeflectionCheck(Calculator calculator, double UDL, double span, double limitRatio)
         {
             // design to EC5-1 cl.2.2.3 and cl.7.2
-            double A = width * depth;
-            double I = width * Math.Pow(depth, 3) / 12;
+            double A = calculator.Functions.GetVar("A_{s1}").ToDouble();
+            double I = calculator.Functions.GetVar("I_{y_s1}").ToDouble();
+            double E = calculator.Functions.GetVar("E_{0.mean}").ToDouble();
+            double G = calculator.Functions.GetVar("G_{g.mean}").ToDouble();
+            double k_def = calculator.Functions.GetVar("k_{def_s1}").ToDouble();
+            double quasiPermFactor = calculator.Functions.GetVar("""\79_{2_s1}""").ToDouble();
 
-            double instantDeflection = 5 * w * Math.Pow(span, 4) / (384 * teddsE * I) + w * Math.Pow(span, 2) / (8 * A * teddsG);
-            double finalDeflection = instantDeflection * (1 + teddsKdef);
+            double instantDeflection = 5 * UDL * Math.Pow(span, 4) / (384 * E * I) + UDL * Math.Pow(span, 2) / (8 * A * G);
+            double finalDeflection = instantDeflection * (1 + k_def);
 
             double deflectionLimit = span * 1000 / limitRatio;
             string result = finalDeflection <= deflectionLimit ? "PASS" : "FAIL";
@@ -107,5 +111,13 @@ namespace TeddsTimberDesign
 
             return new StabilityResult { Result = result, StabilityRatio = stabilityCheck };
         }
+
+        public static StabilityResult ColumnStabilityCheck(Calculator calculator, double length)
+        {
+
+
+            return new StabilityResult { Result = "result", StabilityRatio = 1 };
+        }
+
     }
 }
