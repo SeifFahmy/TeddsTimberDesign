@@ -81,10 +81,10 @@ namespace TeddsTimberDesign
                 k_crit = 1 / Math.Pow(relativeBendingSlenderness, 2);
             }
 
-            double iy = calculator.Functions.GetVar("i_{y_s1}").ToDouble();
-            double f_c0k = calculator.Functions.GetVar("f_{c.0.k}").ToDouble();
+            double iz = calculator.Functions.GetVar("i_{z_s1}").ToDouble();
+            double f_c0k = calculator.Functions.GetVar("f_{c.0.g.k}").ToDouble();
 
-            double slendernessMinor = effectiveLength / iy;
+            double slendernessMinor = effectiveLength / iz;
             double relativeCompressionSlenderness = slendernessMinor / Math.PI * Math.Sqrt(f_c0k / E0_05);
 
             string material = calculator.Functions.GetVar("MemberType").ToString();
@@ -114,9 +114,62 @@ namespace TeddsTimberDesign
 
         public static StabilityResult ColumnStabilityCheck(Calculator calculator, double length)
         {
+            // design to EC5-1 cl.6.3.2
+            double iy = calculator.Functions.GetVar("i_{y_s1}").ToDouble();
+            double iz = calculator.Functions.GetVar("i_{z_s1}").ToDouble();
+            double f_c0k = calculator.Functions.GetVar("f_{c.0.g.k}").ToDouble();
+            double E0_05 = calculator.Functions.GetVar("E_{0.g.05}").ToDouble();
 
+            double effectiveLength = length * 0.9; // assuming UDL on simply supported beam - table 6.1
 
-            return new StabilityResult { Result = "result", StabilityRatio = 1 };
+            double slendernessMinor = effectiveLength / iz;
+            double slendernessMajor = effectiveLength / iy;
+
+            double relativeSlendernessMinor = slendernessMinor / Math.PI * Math.Sqrt(f_c0k / E0_05);
+            double relativeSlendernessMajor = slendernessMajor / Math.PI * Math.Sqrt(f_c0k / E0_05);
+
+            if (relativeSlendernessMajor <= 0.3 && relativeSlendernessMinor <= 0.3)
+            {
+                return new StabilityResult { Result = "PASS", StabilityRatio = Math.Max(relativeSlendernessMajor, relativeSlendernessMinor) };
+            }
+
+            string material = calculator.Functions.GetVar("MemberType").ToString();
+            double beta_c;
+            if (material == "Glulam")
+            {
+                beta_c = 0.1;
+            }
+            else
+            {
+                beta_c = 0.2;
+            }
+
+            double k_z = 0.5 * (1 + beta_c * (relativeSlendernessMinor - 0.3) + Math.Pow(relativeSlendernessMinor, 2));
+            double k_cz = 1 / (k_z + Math.Sqrt(Math.Pow(k_z, 2) - Math.Pow(relativeSlendernessMinor, 2)));
+
+            double k_y = 0.5 * (1 + beta_c * (relativeSlendernessMinor - 0.3) + Math.Pow(relativeSlendernessMinor, 2));
+            double k_cy = 1 / (k_y + Math.Sqrt(Math.Pow(k_y, 2) - Math.Pow(relativeSlendernessMinor, 2)));
+
+            double majorBendingStress = calculator.Functions.GetVar("""\73_{m,y,d_s1}""").ToDouble();
+            double majorBendingStrength = calculator.Functions.GetVar("f_{m,y,d_s1}").ToDouble();
+
+            double minorBendingStress = calculator.Functions.GetVar("""\73_{m,z,d_s1}""").ToDouble();
+            double minorBendingStrength = calculator.Functions.GetVar("f_{m,z,d_s1}").ToDouble();
+
+            double compressiveStress = calculator.Functions.GetVar("""\73_{c,0,d_s1}""").ToDouble();
+            double compressiveStrength = calculator.Functions.GetVar("f_{c,0,d_s1}").ToDouble();
+
+            double km = 0.7; // rectangular section
+
+            double stabilityCheckMajor = compressiveStress / (k_cy * compressiveStrength) + majorBendingStress / majorBendingStrength + km * minorBendingStress / minorBendingStrength;
+            double stabilityCheckMinor = compressiveStress / (k_cz * compressiveStrength) + km * majorBendingStress / majorBendingStrength + minorBendingStress / minorBendingStrength;
+
+            double stabilityCheck = Math.Max(stabilityCheckMajor, stabilityCheckMinor);
+            string result = stabilityCheck <= 1 ? "PASS" : "FAIL";
+
+            System.Console.WriteLine(result, stabilityCheck);
+
+            return new StabilityResult { Result = result, StabilityRatio = stabilityCheck };
         }
 
     }
