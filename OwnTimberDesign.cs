@@ -59,7 +59,7 @@ namespace TeddsTimberDesign
             string result = finalDeflection <= deflectionLimit ? "PASS" : "FAIL";
             string designMessage = result == "PASS" ? "PASS - Allowable deflection exceeds final deflection" : "FAIL - Final deflection exceeds allowable deflection";
 
-            // based on html obtained from the strength verification
+            // based on html obtained from the strength verification and "member analysis and design" calc
             string teddsCalcHtml = $"""
                 <div style="font-size:12pt;font-family:Arial, sans-serif; background-color:gray;">
                     <h5 style="text-align:left;line-height:1.6;font-family:Arial, sans-serif;font-size:9pt;margin:5.3px 0 0 23.8px;">Check deflection - Section 7.2</h5>
@@ -158,12 +158,12 @@ namespace TeddsTimberDesign
 
             double stabilityCheck = Math.Pow(bendingStress / (k_crit * bendingStrength), 2) + compressiveStress / (k_cz * compressiveStrength);
             string result = stabilityCheck <= 1 ? "PASS" : "FAIL";
-            string designMessage = result == "PASS" ? "PASS - Beam stability is accepted" : "FAIL - Beam stability is not acceptable";
+            string designMessage = result == "PASS" ? "PASS - Beam stability is acceptable" : "FAIL - Beam stability is not acceptable";
 
-            // based on html obtained from the strength verification
+            // based on html obtained from the strength verification and "member analysis and design" calc
             string teddsCalcHtml = $"""
                 <div style="font-size:12pt;font-family:Arial, sans-serif; background-color:gray;">
-                    <h5 style="text-align:left;line-height:1.6;font-family:Arial, sans-serif;font-size:9pt;margin:5.3px 0 0 23.8px;">Check beams subject to either bedning or combined bending and compression - Section 6.3.3</h5>
+                    <h5 style="text-align:left;line-height:1.6;font-family:Arial, sans-serif;font-size:9pt;margin:5.3px 0 0 23.8px;">Check beams subject to either bending or combined bending and compression - Section 6.3.3</h5>
                     <div style="display:flex; flex-flow: column nowrap;">
                         <div style="display:flex; flex-flow: row nowrap;text-align:left;line-height:1.6;font-family:Arial, sans-serif;font-size:9pt">
                             <p style="flex: 1 1 0;">Fifth percentile shear modulus parallel to the grain</p>
@@ -217,7 +217,41 @@ namespace TeddsTimberDesign
 
             if (relativeSlendernessMajor <= 0.3 && relativeSlendernessMinor <= 0.3)
             {
-                return new StabilityResult { Result = "PASS", StabilityUtil = Math.Max(relativeSlendernessMajor, relativeSlendernessMinor) };
+                // based on html obtained from the strength verification and "member analysis and design" calc
+                string teddsCalcHtmlCheckNotRequired = $"""
+                    <div style="font-size:12pt;font-family:Arial, sans-serif; background-color:gray;">
+                        <h5 style="text-align:left;line-height:1.6;font-family:Arial, sans-serif;font-size:9pt;margin:5.3px 0 0 23.8px;">Check columns subjected to either bending or combined bending and compression - Section 6.3.2</h5>
+                        <div style="display:flex; flex-flow: column nowrap;line-height:1.6;">
+                            <div style="display:flex; flex-flow: row nowrap;text-align:left;line-height:1.6;font-family:Arial, sans-serif;font-size:9pt">
+                                <p style="flex: 1 1 0;">Effective length for y-axis bending</p>
+                                <p style="flex: 1 1 0;">L<sub>e,y</sub> = 0.9 x {length * 1000} mm = {effectiveLength * 1000} mm</p>
+                            </div>
+                            <div style="display:flex; flex-flow: row nowrap;text-align:left;line-height:1.6;font-family:Arial, sans-serif;font-size:9pt">
+                                <p style="flex: 1 1 0;">Slenderness ratio</p>
+                                <p style="flex: 1 1 0;">λ<sub>y</sub> = L<sub>e,y</sub> / i<sub>y</sub> = {slendernessMajor}</p>
+                            </div>
+                            <div style="display:flex; flex-flow: row nowrap;text-align:left;line-height:1.6;font-family:Arial, sans-serif;font-size:9pt">
+                                <p style="flex: 1 1 0;">Relative slenderness ratio - exp 6.21</p>
+                                <p style="flex: 1 1 0;">λ<sub>rel,y</sub> = λ<sub>y</sub> / π x √(f<sub>c,0,k</sub> / E<sub>0.05</sub>) = {relativeSlendernessMajor}</p>
+                            </div>
+                            <div style="display:flex; flex-flow: row nowrap;text-align:left;line-height:1.6;font-family:Arial, sans-serif;font-size:9pt">
+                                <p style="flex: 1 1 0;">Effective length for z-axis bending</p>
+                                <p style="flex: 1 1 0;">L<sub>e,y</sub> = 0.9 x {length * 1000} = {effectiveLength * 1000} mm</p>
+                            </div>
+                            <div style="display:flex; flex-flow: row nowrap;text-align:left;line-height:1.6;font-family:Arial, sans-serif;font-size:9pt">
+                                <p style="flex: 1 1 0;">Slenderness ratio</p>
+                                <p style="flex: 1 1 0;">λ<sub>z</sub> = L<sub>e,z</sub> / i<sub>z</sub> = {slendernessMinor}</p>
+                            </div>
+                            <div style="display:flex; flex-flow: row nowrap;text-align:left;line-height:1.6;font-family:Arial, sans-serif;font-size:9pt">
+                                <p style="flex: 1 1 0;">Relative slenderness ratio - exp 6.22</p>
+                                <p style="flex: 1 1 0;">λ<sub>rel,z</sub> = λ<sub>z</sub> / π x √(f<sub>c,0,k</sub> / E<sub>0.05</sub>) = {relativeSlendernessMinor}</p>
+                            </div>
+                            <p style="text-align:right; font-style:italic; font-size:9pt;"><strong><em>Both λ<sub>rel,y</sub> and λ<sub>rel,z</sub> ≤ 0.3, column stability check not required</em></strong></p>
+                        </div>
+                    </div>
+                """;
+
+                return new StabilityResult { Result = "PASS", StabilityUtil = Math.Max(relativeSlendernessMajor, relativeSlendernessMinor), StabilityHtml = teddsCalcHtmlCheckNotRequired };
             }
 
             double beta_c;
@@ -253,8 +287,73 @@ namespace TeddsTimberDesign
 
             double stabilityCheck = Math.Max(stabilityCheckMajor, stabilityCheckMinor);
             string result = stabilityCheck <= 1 ? "PASS" : "FAIL";
+            string designMessage = result == "PASS" ? "PASS - Column stability is acceptable" : "FAIL - Column stability is not acceptable";
 
-            return new StabilityResult { Result = result, StabilityUtil = stabilityCheck };
+            // based on html obtained from the strength verification and "member analysis and design" calc
+            string teddsCalcHtml = $"""
+                    <div style="font-size:12pt;font-family:Arial, sans-serif; background-color:gray;">
+                        <h5 style="text-align:left;line-height:1.6;font-family:Arial, sans-serif;font-size:9pt;margin:5.3px 0 0 23.8px;">Check columns subjected to either bending or combined bending and compression - Section 6.3.2</h5>
+                        <div style="display:flex; flex-flow: column nowrap;line-height:1.6;">
+                            <div style="display:flex; flex-flow: row nowrap;text-align:left;line-height:1.6;font-family:Arial, sans-serif;font-size:9pt">
+                                <p style="flex: 1 1 0;">Effective length for y-axis bending</p>
+                                <p style="flex: 1 1 0;">L<sub>e,y</sub> = 0.9 x {length * 1000} mm = {effectiveLength * 1000} mm</p>
+                            </div>
+                            <div style="display:flex; flex-flow: row nowrap;text-align:left;line-height:1.6;font-family:Arial, sans-serif;font-size:9pt">
+                                <p style="flex: 1 1 0;">Slenderness ratio</p>
+                                <p style="flex: 1 1 0;">λ<sub>y</sub> = L<sub>e,y</sub> / i<sub>y</sub> = {slendernessMajor}</p>
+                            </div>
+                            <div style="display:flex; flex-flow: row nowrap;text-align:left;line-height:1.6;font-family:Arial, sans-serif;font-size:9pt">
+                                <p style="flex: 1 1 0;">Relative slenderness ratio - exp 6.21</p>
+                                <p style="flex: 1 1 0;">λ<sub>rel,y</sub> = λ<sub>y</sub> / π x √(f<sub>c,0,k</sub> / E<sub>0.05</sub>) = {relativeSlendernessMajor}</p>
+                            </div>
+                            <div style="display:flex; flex-flow: row nowrap;text-align:left;line-height:1.6;font-family:Arial, sans-serif;font-size:9pt">
+                                <p style="flex: 1 1 0;">Effective length for z-axis bending</p>
+                                <p style="flex: 1 1 0;">L<sub>e,y</sub> = 0.9 x {length * 1000} = {effectiveLength * 1000} mm</p>
+                            </div>
+                            <div style="display:flex; flex-flow: row nowrap;text-align:left;line-height:1.6;font-family:Arial, sans-serif;font-size:9pt">
+                                <p style="flex: 1 1 0;">Slenderness ratio</p>
+                                <p style="flex: 1 1 0;">λ<sub>z</sub> = L<sub>e,z</sub> / i<sub>z</sub> = {slendernessMinor}</p>
+                            </div>
+                            <div style="display:flex; flex-flow: row nowrap;text-align:left;line-height:1.6;font-family:Arial, sans-serif;font-size:9pt">
+                                <p style="flex: 1 1 0;">Relative slenderness ratio - exp 6.22</p>
+                                <p style="flex: 1 1 0;">λ<sub>rel,z</sub> = λ<sub>z</sub> / π x √(f<sub>c,0,k</sub> / E<sub>0.05</sub>) = {relativeSlendernessMinor}</p>
+                            </div>
+                            <p style="text-align:right; font-style:italic; font-size:9pt;"><strong><em>λ<sub>rel,y</sub> > 0.3, column stability check is required</em></strong></p>
+                            <div style="display:flex; flex-flow: row nowrap;text-align:left;line-height:1.6;font-family:Arial, sans-serif;font-size:9pt">
+                                <p style="flex: 1 1 0;">Slenderness factor</p>
+                                <p style="flex: 1 1 0;">β<sub>c</sub> = {beta_c}</p>
+                            </div>
+                            <div style="display:flex; flex-flow: row nowrap;text-align:left;line-height:1.6;font-family:Arial, sans-serif;font-size:9pt">
+                                <p style="flex: 1 1 0;">Instability factors - exp 6.25, 6.26, 6.27, & 6.28</p>
+                                <p style="flex: 1 1 0;">k<sub>y</sub> = 0.5 x (1 + β<sub>c</sub> x (λ<sub>rel,y</sub> - 0.3) + λ<sub>rel,y</sub><sup>2</sup>) = {Math.Round(k_y * 1000) / 1000}</p>
+                            </div>
+                            <div style="display:flex; flex-flow: row nowrap;text-align:left;line-height:1.6;font-family:Arial, sans-serif;font-size:9pt">
+                                <p style="flex: 1 1 0;"> </p>
+                                <p style="flex: 1 1 0;">k<sub>z</sub> = 0.5 x (1 + β<sub>c</sub> x (λ<sub>rel,z</sub> - 0.3) + λ<sub>rel,z</sub><sup>2</sup>) = {Math.Round(k_z * 1000) / 1000}</p>
+                            </div>
+                            <div style="display:flex; flex-flow: row nowrap;text-align:left;line-height:1.6;font-family:Arial, sans-serif;font-size:9pt">
+                                <p style="flex: 1 1 0;"> </p>
+                                <p style="flex: 1 1 0;">k<sub>c,y</sub> = 1 / (k<sub>y</sub> + √(k<sub>y</sub><sup>2</sup> - λ<sub>rel,y</sub><sup>2</sup>)) = {Math.Round(k_cy * 1000) / 1000}</p>
+                            </div>
+                            <div style="display:flex; flex-flow: row nowrap;text-align:left;line-height:1.6;font-family:Arial, sans-serif;font-size:9pt">
+                                <p style="flex: 1 1 0;"> </p>
+                                <p style="flex: 1 1 0;">k<sub>c,z</sub> = 1 / (k<sub>z</sub> + √(k<sub>z</sub><sup>2</sup> - λ<sub>rel,z</sub><sup>2</sup>)) = {Math.Round(k_cz * 1000) / 1000}</p>
+                            </div>
+                            <div style="display:flex; flex-flow: row nowrap;text-align:left;line-height:1.6;font-family:Arial, sans-serif;font-size:9pt">
+                                <p style="flex: 1 1 0;">Column stability checks - exp 6.23 & 6.24</p>
+                                <p style="flex: 1 1 0;">σ<sub>c,0,d</sub> / (k<sub>c,y</sub> x f<sub>c,0,d</sub>) + σ<sub>m,y,d</sub> / f<sub>m,y,d</sub> + k<sub>m</sub> x σ<sub>m,z,d</sub> / f<sub>m,z,d</sub> = {Math.Round(stabilityCheckMajor * 1000) / 1000}</p>
+                            </div>
+                            <div style="display:flex; flex-flow: row nowrap;text-align:left;line-height:1.6;font-family:Arial, sans-serif;font-size:9pt">
+                                <p style="flex: 1 1 0;"> </p>
+                                <p style="flex: 1 1 0;">σ<sub>c,0,d</sub> / (k<sub>c,z</sub> x f<sub>c,0,d</sub>) + k<sub>m</sub> x σ<sub>m,y,d</sub> / f<sub>m,y,d</sub> + σ<sub>m,z,d</sub> / f<sub>m,z,d</sub> = {Math.Round(stabilityCheckMinor * 1000) / 1000}</p>
+                            </div>
+                            <p style="text-align:right; font-style:italic; font-size:9pt;"><strong><em>{designMessage}</em></strong></p>
+                        </div>
+                    </div>
+                """;
+
+
+            return new StabilityResult { Result = result, StabilityUtil = stabilityCheck, StabilityHtml = teddsCalcHtml };
         }
         #endregion
 
