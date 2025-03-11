@@ -63,7 +63,6 @@ namespace TeddsTimberDesign
         /// This initial window is for the user to set up variables like the strength class and whether it's Glulam or Solid Timber.
         /// The variables the user defines in this window are saved in the calculator instance to be used by future design calculations.
         /// </summary> 
-
         public static void ShowInitialWindow()
         {
             calculator.Initialize();
@@ -75,10 +74,25 @@ namespace TeddsTimberDesign
         #endregion
 
         #region Member design
+        public class DesignOutput
+        {
+            public required List<Dictionary<string, object>> MemberSections { get; set; }
+            public required MaterialData MaterialData { get; set; }
+        }
+
+        public class MaterialData
+        {
+            public required string Name { get; set; }
+            public required string Type { get; set; }
+            public required double E { get; set; }
+            public required double G { get; set; }
+            public required double UnitWeight { get; set; }
+        }
+
         /// <summary>
         /// This takes the previously user-defined material values, adds to them the member-specific variables, and runs the calculation. 
         /// </summary> 
-        public static List<Dictionary<string, object>> DesignMembers(DesignData designData)
+        public static DesignOutput DesignMembers(DesignData designData)
         {
             calculator.Functions.SetVar("_CalcUI", 0);
 
@@ -86,7 +100,10 @@ namespace TeddsTimberDesign
             var robotMaterialData = designData.RobotMaterialData;
             var deflectionLimit = designData.BeamDeflectionLimitRatio;
 
-            var results = new List<Dictionary<string, object>>();
+            string material = calculator.Functions.GetVar("MemberType").ToString();
+            string strengthClass = calculator.Functions.GetVar("StrengthClass").ToString();
+
+            var memberSections = new List<Dictionary<string, object>>();
             foreach (var member in memberData)
             {
                 if (member.Axial >= 0) { calculator.Functions.SetVar("_AxialForce_{s1}", "Compression"); }
@@ -97,8 +114,6 @@ namespace TeddsTimberDesign
                 calculator.Functions.SetVar("F_{y,d_s1}", Math.Abs(member.ShearMajor), "kN");
                 calculator.Functions.SetVar("F_{z,d_s1}", Math.Abs(member.ShearMinor), "kN");
                 calculator.Functions.SetVar("P_{d_s1}", Math.Abs(member.Axial), "kN");
-
-                string material = calculator.Functions.GetVar("MemberType").ToString();
 
                 List<SectionSizeData> possibleSectionSizes;
                 if (material == "Glulam" && member.IsAxialMember)
@@ -174,14 +189,13 @@ namespace TeddsTimberDesign
                     designMessage = deflectionCheck.DeflectionMessage;
                 }
 
-                string strengthClass = calculator.Functions.GetVar("StrengthClass").ToString();
                 string outputRtf = calculator.GetOutput();
 
                 Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
                 string outputHtml = Rtf.ToHtml(outputRtf);
                 string finalOutputHtml = outputHtml + stabilityCheck.StabilityHtml + deflectionCheck.DeflectionHtml;
 
-                results.Add(new Dictionary<string, object>(){
+                memberSections.Add(new Dictionary<string, object>(){
                     { "id", member.Id },
                     { "section", $"{width}x{depth}" },
                     { "result", result },
@@ -193,7 +207,16 @@ namespace TeddsTimberDesign
                 });
             }
 
-            return results;
+            double G;
+            if (material == "Glulam") { G = calculator.Functions.GetVar("G_{g.mean}").ToDouble(); }
+            else { G = calculator.Functions.GetVar("G_{mean}").ToDouble(); }
+
+            double E = calculator.Functions.GetVar("E_{0.mean}").ToDouble();
+            double unitWeight = calculator.Functions.GetVar("""\72_{g.mean}""").ToDouble() * 10;
+
+            var materialData = new MaterialData { Name = $"{material} {strengthClass}", Type = material, E = E, G = G, UnitWeight = unitWeight };
+
+            return new DesignOutput { MemberSections = memberSections, MaterialData = materialData };
         }
         #endregion
     }
