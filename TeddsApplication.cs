@@ -76,7 +76,7 @@ namespace TeddsTimberDesign
         #region Member design
         public class DesignOutput
         {
-            public required List<Dictionary<string, object>> MemberSections { get; set; }
+            public required List<Dictionary<string, object>> MemberData { get; set; }
             public required MaterialData MaterialData { get; set; }
         }
 
@@ -218,7 +218,7 @@ namespace TeddsTimberDesign
 
             var materialData = new MaterialData { Name = $"{material} {strengthClass}", Type = material, E = E, G = G, UnitWeight = unitWeight };
 
-            return new DesignOutput { MemberSections = memberSections, MaterialData = materialData };
+            return new DesignOutput { MemberData = memberSections, MaterialData = materialData };
         }
         #endregion
     }
