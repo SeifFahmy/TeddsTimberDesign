@@ -207,12 +207,18 @@ namespace TeddsTimberDesign
                 });
             }
 
-            double G;
-            if (material == "Glulam") { G = calculator.Functions.GetVar("G_{g.mean}").ToDouble(); }
-            else { G = calculator.Functions.GetVar("G_{mean}").ToDouble(); }
-
             double E = calculator.Functions.GetVar("E_{0.mean}").ToDouble();
-            double unitWeight = calculator.Functions.GetVar("""\72_{g.mean}""").ToDouble() * 10;
+            double G, unitWeight;
+            if (material == "Glulam")
+            {
+                G = calculator.Functions.GetVar("G_{g.mean}").ToDouble();
+                unitWeight = calculator.Functions.GetVar("""\72_{g.mean}""").ToDouble() * 10;
+            }
+            else
+            {
+                G = calculator.Functions.GetVar("G_{mean}").ToDouble();
+                unitWeight = calculator.Functions.GetVar("""\72_{mean}""").ToDouble() * 10;
+            }
 
             var materialData = new MaterialData { Name = $"{material} {strengthClass}", Type = material, E = E, G = G, UnitWeight = unitWeight };
 
