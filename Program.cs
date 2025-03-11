@@ -10,31 +10,25 @@ namespace TeddsTimberDesign
     {
         static void Main(string[] args)
         {
-            if (args.Length != 2)
+            if (args.Length != 3)
             {
                 throw new Exception("invalid number of arguments passed");
             }
 
             string parentWindow = args[0];
-            string jsonData = args[1];
+            string robotData = args[1];
+            double beamDeflectionLimitRatio = double.Parse(args[2]);
 
             TeddsApplication.SetUpTeddsWindow(parentWindow);
             TeddsApplication.ShowInitialWindow();
 
-            var parsedJson = JsonConvert.DeserializeObject<DesignData>(jsonData);
+            var parsedRobotData = JsonConvert.DeserializeObject<List<RobotMemberData>>(robotData);
 
-            var results = TeddsApplication.DesignMembers(parsedJson);
+            var results = TeddsApplication.DesignMembers(parsedRobotData, beamDeflectionLimitRatio);
             var jsonResults = JsonConvert.SerializeObject(results);
             System.Console.WriteLine(jsonResults);
         }
 
-    }
-
-    public class DesignData
-    {
-        public RobotMaterialData RobotMaterialData { get; set; }
-        public List<RobotMemberData> RobotMemberData { get; set; }
-        public double BeamDeflectionLimitRatio { get; set; }
     }
 
     public class RobotMemberData
@@ -50,11 +44,7 @@ namespace TeddsTimberDesign
         public double Area { get; set; }
         public double SecondMomentOfArea { get; set; }
         public double Length { get; set; }
-    }
-
-    public class RobotMaterialData
-    {
-        public double RobotE { get; set; }
-        public double RobotG { get; set; }
+        public double MaterialE { get; set; }
+        public double MaterialG { get; set; }
     }
 }

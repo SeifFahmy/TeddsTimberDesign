@@ -92,13 +92,9 @@ namespace TeddsTimberDesign
         /// <summary>
         /// This takes the previously user-defined material values, adds to them the member-specific variables, and runs the calculation. 
         /// </summary> 
-        public static DesignOutput DesignMembers(DesignData designData)
+        public static DesignOutput DesignMembers(List<RobotMemberData> memberData, double beamDeflectionLimitRatio)
         {
             calculator.Functions.SetVar("_CalcUI", 0);
-
-            var memberData = designData.RobotMemberData;
-            var robotMaterialData = designData.RobotMaterialData;
-            var deflectionLimit = designData.BeamDeflectionLimitRatio;
 
             string material = calculator.Functions.GetVar("MemberType").ToString();
             string strengthClass = calculator.Functions.GetVar("StrengthClass").ToString();
@@ -133,7 +129,7 @@ namespace TeddsTimberDesign
                     possibleSectionSizes = SectionSizes.timberBeamSectionSizes;
                 }
 
-                double effectiveUdl = OwnTimberDesign.CalculateEffectiveUDL(member.Deflection, robotMaterialData.RobotE, robotMaterialData.RobotG, member.Area, member.SecondMomentOfArea, member.Length);
+                double effectiveUdl = OwnTimberDesign.CalculateEffectiveUDL(member.Deflection, member.MaterialE, member.MaterialG, member.Area, member.SecondMomentOfArea, member.Length);
 
                 var stabilityCheck = new OwnTimberDesign.StabilityResult { Result = "FAIL", StabilityUtil = -1, StabilityHtml = "" };
                 var deflectionCheck = new OwnTimberDesign.DeflectionResult { Result = member.IsAxialMember ? "PASS" : "FAIL", DeflectionUtil = -1, DeflectionHtml = "" }; // no deflection check for columns
@@ -152,7 +148,7 @@ namespace TeddsTimberDesign
 
                     if (!member.IsAxialMember)
                     {
-                        deflectionCheck = OwnTimberDesign.DeflectionCheck(calculator, effectiveUdl, member.Length, deflectionLimit);
+                        deflectionCheck = OwnTimberDesign.DeflectionCheck(calculator, effectiveUdl, member.Length, beamDeflectionLimitRatio);
                     }
 
                     if (strengthResult == "PASS" && stabilityCheck.Result == "PASS" && deflectionCheck.Result == "PASS")
