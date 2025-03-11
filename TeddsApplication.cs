@@ -129,7 +129,7 @@ namespace TeddsTimberDesign
                     possibleSectionSizes = SectionSizes.timberBeamSectionSizes;
                 }
 
-                double effectiveUdl = OwnTimberDesign.CalculateEffectiveUDL(member.Deflection, member.MaterialE, member.MaterialG, member.Area, member.SecondMomentOfArea, member.Length);
+                double effectiveUdl = OwnTimberDesign.CalculateEffectiveUDL(member.Deflection, member.RobotE, member.RobotG, member.Area, member.SecondMomentOfArea, member.Length);
 
                 var stabilityCheck = new OwnTimberDesign.StabilityResult { Result = "FAIL", StabilityUtil = -1, StabilityHtml = "" };
                 var deflectionCheck = new OwnTimberDesign.DeflectionResult { Result = member.IsAxialMember ? "PASS" : "FAIL", DeflectionUtil = -1, DeflectionHtml = "" }; // no deflection check for columns

@@ -154,10 +154,14 @@ namespace TeddsTimberDesign
             double k_z = 0.5 * (1 + beta_c * (relativeCompressionSlenderness - 0.3) + Math.Pow(relativeCompressionSlenderness, 2));
             double k_cz = 1 / (k_z + Math.Sqrt(Math.Pow(k_z, 2) - Math.Pow(relativeCompressionSlenderness, 2)));
 
-            double bendingStress = calculator.Functions.GetVar("""\73_{m,y,d_s1}""").ToDouble();
-            double bendingStrength = calculator.Functions.GetVar("f_{m,y,d_s1}").ToDouble();
-            double compressiveStress = calculator.Functions.GetVar("""\73_{c,0,d_s1}""").ToDouble();
-            double compressiveStrength = calculator.Functions.GetVar("f_{c,0,d_s1}").ToDouble();
+            // tedds doesn't calculate a stress or strength (e.g. bending) if its force (e.g. moment) isn't applied, so inspecting the stress value throws an error
+            bool momentMajorApplied = calculator.Functions.GetVar("M_{y,d_s1}").ToDouble() == 0 ? false : true;
+            bool axialApplied = calculator.Functions.GetVar("P_{d_s1}").ToDouble() == 0 ? false : true;
+
+            double bendingStress = momentMajorApplied ? calculator.Functions.GetVar("""\73_{m,y,d_s1}""").ToDouble() : 0;
+            double bendingStrength = momentMajorApplied ? calculator.Functions.GetVar("f_{m,y,d_s1}").ToDouble() : 1;
+            double compressiveStress = axialApplied ? calculator.Functions.GetVar("""\73_{c,0,d_s1}""").ToDouble() : 0;
+            double compressiveStrength = axialApplied ? calculator.Functions.GetVar("f_{c,0,d_s1}").ToDouble() : 1;
 
             double stabilityCheck = Math.Pow(bendingStress / (k_crit * bendingStrength), 2) + compressiveStress / (k_cz * compressiveStrength);
             string result = stabilityCheck <= 1 ? "PASS" : "FAIL";

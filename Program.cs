@@ -17,13 +17,13 @@ namespace TeddsTimberDesign
 
             string parentWindow = args[0];
             string robotData = args[1];
+
             double beamDeflectionLimitRatio = double.Parse(args[2]);
 
             TeddsApplication.SetUpTeddsWindow(parentWindow);
             TeddsApplication.ShowInitialWindow();
 
             var parsedRobotData = JsonConvert.DeserializeObject<List<RobotMemberData>>(robotData);
-
             var results = TeddsApplication.DesignMembers(parsedRobotData, beamDeflectionLimitRatio);
             var jsonResults = JsonConvert.SerializeObject(results);
             System.Console.WriteLine(jsonResults);
@@ -44,7 +44,7 @@ namespace TeddsTimberDesign
         public double Area { get; set; }
         public double SecondMomentOfArea { get; set; }
         public double Length { get; set; }
-        public double MaterialE { get; set; }
-        public double MaterialG { get; set; }
+        public double RobotE { get; set; }
+        public double RobotG { get; set; }
     }
 }
