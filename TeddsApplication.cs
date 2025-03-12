@@ -243,6 +243,9 @@ namespace TeddsTimberDesign
             new SectionSizeData {Width=320, Depth=840},
             new SectionSizeData {Width=360, Depth=920},
             new SectionSizeData {Width=360, Depth=1000},
+            new SectionSizeData {Width=470, Depth=1200},
+            new SectionSizeData {Width=470, Depth=1400},
+            new SectionSizeData {Width=470, Depth=1600},
             };
         public static readonly List<SectionSizeData> timberBeamSectionSizes = new() {
             new SectionSizeData {Width=75, Depth=150},
